@@ -22,7 +22,7 @@ Inside dev-team, the approved spec from the Specs role is the spec: consume it, 
 - **Failure cases**: validation denial, authorization denial, stale approval, transient failure, committed-but-response-lost, post-commit side-effect failure, as applicable.
 - **Seams**: the public boundaries where tests go (see below).
 
-For risky areas (approvals, transactions, pagination, authorization, errors, async lifecycle), read `~/.agents/skills/code-review/references/stateful-review.md` and write down one counterexample per applicable invariant before coding. Keep the spec lean: long specs make agents lose the thread.
+For risky areas (approvals, transactions, pagination, authorization, errors, async lifecycle), read `~/.agents/skills/code-review/references/defect-patterns.md` and write down one counterexample per applicable invariant before coding. Keep the spec lean: long specs make agents lose the thread.
 
 Ask the user only when a material product decision is unresolved. Do not ask for approval of seams, test names, or routine choices.
 
@@ -45,11 +45,11 @@ After the tests pass, small behavior-preserving cleanups of the code you just wr
 
 ## 4. Sibling sweep and verification
 
-Pattern self-check (Tier 0 of `pre-review`, cheap): read `~/.agents/skills/code-review/references/coderabbit-patterns.md` and, for each pattern whose cues appear in your diff, try its "break it with" cases against your code. Fix what breaks. This is authoring discipline, not a review; the independent pass is separate.
+Pattern self-check (cheap, before review): read `~/.agents/skills/code-review/references/defect-patterns.md` and, for each pattern whose cues appear in your diff, try its "break it with" cases against your code. Fix what breaks. This is authoring discipline, not a review; the independent pass is separate.
 
 Before reporting: for each defect you fixed, search for the same root cause at other call sites and in sibling implementations, and fix or list them. Run typecheck regularly, single test files regularly, and the full agreed gate once at the end. Report exact changed paths, commands with exit codes, seams covered, the invariant-to-test mapping, and anything not verified.
 
 ## 5. Hand-off
 
 - **Inside dev-team or PR follow-up:** stop here. Return the snapshot to the parent. Never self-review, commit, or push; the parent dispatches independent Standards and Spec reviews and the Publisher.
-- **Standalone:** run `pre-review` first, then `code-review` (both axes, independent), then the `commit` skill and, per shared policy, `create-pr`. They handle branch name, Linear ticket, conventional commit and PR body.
+- **Standalone:** run `review-loop` (all independent reviews, before anything is committed), then the `commit` skill and, per shared policy, `create-pr`. They handle branch name, Linear ticket, conventional commit and PR body.

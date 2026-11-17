@@ -38,7 +38,7 @@ Gather standards from root/nearest instructions, required domain/permission docs
 
 ## Risk and evidence before verdict
 
-Read [stateful review](references/stateful-review.md) when the diff touches protected reads/writes, approvals, previews, state transitions, history, pagination/search or truncation. Trace applicable invariants through connected callers/callees; do not stop at checking that a guard or digest exists. Prioritize demonstrated correctness, security and contract failures before smell/style suggestions.
+Read [defect patterns](references/defect-patterns.md) for every Standards and Impact pass; it lists the recurring invariants (approval completeness, state-change guards, boundaries, failure phases, disclosure, contract ripple, claims versus tests) with cues and break-it cases. Trace applicable invariants through connected callers/callees; do not stop at checking that a guard or digest exists. Prioritize demonstrated correctness, security and contract failures before smell/style suggestions.
 
 The implementer never acts as its own independent reviewer. If a delegated worker cannot spawn reviewers, it returns the snapshot to the parent, which dispatches both sibling review roles. Do not silently collapse both axes into that worker. Missing mandatory instructions, authorization docs, material caller analysis or proof of an acceptance condition block the affected verdict; list precisely what is missing rather than reporting an unconditional pass.
 
@@ -86,7 +86,7 @@ Question: does the changed behavior still work through its real consumers and fa
 1. Trace one complete happy path end to end (UI or tool → validation → authorization → write → response → user-visible text).
 2. Identify the invariants the change alters.
 3. Enumerate consumers by search: callers, validators, serializers, caches, background paths, sibling implementations. Bound the exploration; state where you stopped.
-4. Pick risk-specific counterexamples from `references/stateful-review.md` (changed-field coverage including added, removed, changed and renamed; output-to-input round trips; N-1/N/N+1 and cumulative read budgets; error phases including committed-but-response-lost; async lifecycle: unmount, cancellation, workspace switch, retry).
+4. Pick risk-specific counterexamples from `references/defect-patterns.md` (changed-field coverage including added, removed, changed and renamed; output-to-input round trips; N-1/N/N+1 and cumulative read budgets; error phases including committed-but-response-lost; async lifecycle: unmount, cancellation, workspace switch, retry).
 5. Check that tests distinguish correct from broken behavior: would each fail without the guard, for the right reason? A race test must mutate state between the recheck and the commit.
 
 **Report:** the standard report contract plus selected risks and affected paths. Only actionable findings with `file:line`, a reachable scenario, consequence and evidence. Use "not verified" instead of inventing a pass. Duplicate findings with the other axes share one issue ID; each axis keeps its own verdict.

@@ -1,5 +1,0 @@
-interface:
-  display_name: Pre-review
-  short_description: Catch bot-review findings before pushing
-policy:
-  allow_implicit_invocation: true

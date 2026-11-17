@@ -1,0 +1,5 @@
+interface:
+  display_name: Review loop
+  short_description: Run all independent reviews before the first commit
+policy:
+  allow_implicit_invocation: true
