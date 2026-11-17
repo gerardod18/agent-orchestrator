@@ -16,7 +16,7 @@ For every changed operation, trace input validation → caller or tool availabil
 ## 2. A guard covers every way the state can change
 **Invariant:** the state recorded at review time includes everything displayed and every path that can change it, and the writer re-checks that inside the transaction.
 **Cues:** a digest, hash, revision or `expected*` argument; a preview followed by a write; a recheck in a thin layer before a shared writer; a branch for "already done".
-**Displayed but unguarded is a finding, not "cosmetic":** if the person sees a field when approving and the writer does not re-check it, the approved text can differ from what executes. Rate it by what the person could be misled about, not by how unlikely the window is.
+**Displayed but unguarded:** if the person sees a field when approving and the writer does not re-check it, the approved text can differ from what executes. Report it even if it looks cosmetic, with an honest low severity.
 **Break it with:** a change that doesn't bump the revision (status, archive, rename, metadata, inherited or indirect membership); equal counts with different members; a change between recheck and commit; the already-done and retry paths.
 **Title shape:** "Include <displayed/resolved state> in the <digest>." · "Re-check <state> inside the writer." · "Handle the <guard> on the <already-done> path."
 
@@ -59,4 +59,7 @@ Check that a fix did not replace one bug with another: a catch-all conversion, c
 ## Improving recall
 After a PR, compare the automated reviewer's first-round findings with the review-loop ledger. For each miss, first restate it as an existing invariant above and sharpen that invariant's cues or break-it cases. Add a new pattern only if it fits none. Never add a rule per comment, a file name or a PR number.
 
-Replay checks (Nov 2026, two PRs, blind reviewers): a single reviewer without the enumerations caught 1 of 7 first-round findings. With the enumerations, a minimum budget and three parallel axes, the combined reviewers caught 4 of 7. The 3 misses were judgment errors, not coverage: a displayed-but-unguarded field rated cosmetic, an omission treated as disclosed, and a type-level permission accepted as scope. The three rules above address them.
+Replay checks (Nov 2026, two PRs, blind reviewers): a single reviewer without the enumerations caught 1 of 7 first-round findings. With the enumerations, a minimum budget and three parallel axes, the combined reviewers caught 4 of 7. The 3 misses were judgment errors, not coverage: a displayed-but-unguarded field dismissed as cosmetic, an omission treated as disclosed, and a type-level permission accepted as scope. Reviewers must report such items instead of dismissing them (see Reporting).
+
+## Reporting
+Report every gap you find, including ones that look cosmetic, unlikely or already disclosed, each with an honest severity (Minor, or Nit for cosmetic). Do not drop a finding because you judged it low impact: triage is the loop's job, not the reviewer's. A gap noticed in an enumeration but left out of the findings is a reporting error.

@@ -97,6 +97,8 @@ Pass each leaf reviewer this skill's absolute path, its explicit mode, resolved 
 
 ## Report contract
 
+Report every gap you find, including cosmetic, unlikely or apparently disclosed ones, with an honest severity (Nit for cosmetic). Never dismiss a gap by judging its impact; the orchestrator triages. A gap seen while tracing but absent from the findings is a reporting error.
+
 Every leaf returns:
 
 - Skill name, absolute path, and executed mode; selected scope and resolved base/HEAD; snapshot identity before and after.
