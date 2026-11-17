@@ -13,6 +13,8 @@ This is the single canonical source-code review procedure. Keep Standards (corre
 - `mode=standards`: explicitly delegated leaf reviewer; read this entire skill, establish/verify the supplied scope and sources, execute only the Standards pass, and return its report to the caller. Do not spawn reviewers or aggregate another axis.
 - `mode=spec`: explicitly delegated leaf reviewer; read this entire skill, establish/verify the supplied scope and sources, execute only the Spec pass, and return its report to the caller. Do not spawn reviewers or aggregate another axis.
 
+- `mode=impact`: explicitly delegated third leaf reviewer for risky changes (see "Impact pass"); read this entire skill and execute only the Impact pass. Same leaf rules as above. Never part of `mode=full` unless the caller requests it.
+
 A dev-team reviewer must use its assigned leaf mode before reporting. Loading this file alone is not execution. If required inputs are unavailable, return the blocker to the orchestrator rather than substituting an internal checklist or asking the user directly.
 
 ## Pin scope and identity
@@ -71,6 +73,23 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 ## Spec pass
 
 Check every approved criterion, negative/edge case, exclusion, and authorization boundary against the selected snapshot and tests. Report missing or partial behavior, requirements implemented incorrectly, and behavior outside scope. Cite the exact requirement or exclusion for each finding. List requirements that cannot be verified; do not turn absent evidence into a pass or make style-only comments.
+
+## Impact pass
+
+Question: does the changed behavior still work through its real consumers and failure paths? Standards owns invariants and authorization; Spec owns acceptance. Impact independently exercises the call chain and does not excuse either axis from its own checks.
+
+**When it runs:** the change affects authorization or visibility, approval or confirmed writes, schemas or shared contracts, pagination or limits, background jobs, upload or cancellation, retry or idempotency, or shared helpers with materially different consumers; or a finding revealed a sibling-path omission. Typos and isolated presentation changes stay with two axes.
+
+**Inputs:** request criteria, exact base/head or snapshot fingerprint, touched files, relevant repository rules, implementation and check evidence, affected entry points. Do not read other reviewers' conclusions before your first pass is complete.
+
+**Procedure:**
+1. Trace one complete happy path end to end (UI or tool → validation → authorization → write → response → user-visible text).
+2. Identify the invariants the change alters.
+3. Enumerate consumers by search: callers, validators, serializers, caches, background paths, sibling implementations. Bound the exploration; state where you stopped.
+4. Pick risk-specific counterexamples from `references/stateful-review.md` (changed-field coverage including added, removed, changed and renamed; output-to-input round trips; N-1/N/N+1 and cumulative read budgets; error phases including committed-but-response-lost; async lifecycle: unmount, cancellation, workspace switch, retry).
+5. Check that tests distinguish correct from broken behavior: would each fail without the guard, for the right reason? A race test must mutate state between the recheck and the commit.
+
+**Report:** the standard report contract plus selected risks and affected paths. Only actionable findings with `file:line`, a reachable scenario, consequence and evidence. Use "not verified" instead of inventing a pass. Duplicate findings with the other axes share one issue ID; each axis keeps its own verdict.
 
 ## Full-mode delegation
 

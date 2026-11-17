@@ -6,7 +6,7 @@ from pathlib import Path
 ORCH = {"dev-team", "pr-followup"}
 # roles named in prose rather than by id
 ROLE = {"PR reader": "dev-team-pr-reader", "Implementer": "dev-team-implementer", "Standards reviewer": "dev-team-review-standards",
-        "Spec reviewer": "dev-team-review-spec", "Publisher": "dev-team-publisher", "Specs": "dev-team-specs"}
+        "Spec reviewer": "dev-team-review-spec", "Impact reviewer": "dev-team-review-impact", "Publisher": "dev-team-publisher", "Specs": "dev-team-specs"}
 
 
 def front(text):

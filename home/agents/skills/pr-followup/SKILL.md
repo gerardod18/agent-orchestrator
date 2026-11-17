@@ -17,6 +17,7 @@ The parent dispatches these roles as sibling tasks, reusing existing agents wher
 | Implementer | One batch of scoped fixes and regression tests, plus repository validation. Sole code writer per worktree. |
 | Standards reviewer | Independent canonical `code-review`, `mode=standards`. |
 | Spec reviewer | Independent canonical `code-review`, `mode=spec`, using the existing criteria. |
+| Impact reviewer (conditional) | Independent canonical `code-review`, `mode=impact`, for risky batches: authorization, approvals, shared contracts, pagination, async, retries, or a fix that exposed a missed sibling path. |
 | Publisher | `commit`, `ci-prepush-guardian`, factual replies and verified thread resolution under recorded authorization. |
 
 Use contracts from `~/.agents/agent-definitions/` and their generated native roles. If a native name is not exposed by the session, give an available generic subagent the full contract, exact skill paths, scope, and inputs. Do not retry a nonexistent role or tell an implementer to perform its own review. Child roles return results to the parent; no child needs nested delegation. If dispatch capacity is full, wait/reuse agents. If delegation is unavailable entirely, report the missing capability; the parent does not silently become the implementer or independent reviewer. Each worker preserves others' edits. Never run Git mutations concurrently in one worktree.
@@ -26,7 +27,7 @@ Use contracts from `~/.agents/agent-definitions/` and their generated native rol
 1. **The parent never edits code.** Not even "one quick fix". When review comments land, the parent's first actions are: run `python3 ~/.agents/dev-team/scripts/followup_gate.py on` in the repo (a PreToolUse hook then blocks parent Edit/Write; subagents are exempt), dispatch the PR reader, then pass the reader's complete verdict table to **one** `dev-team-implementer` call. Run `followup_gate.py off` when the PR is ready or the task ends.
 2. **Never relay comments one by one.** The reader's table is the batch. The implementer receives all valid findings of that round together with the original criteria.
 3. **Sweep siblings before the next push.** For each fixed root cause, the implementer searches the other call sites, validators, serializers, caches, background paths and sibling implementations, and fixes or lists them. Then the implementer maps each invariant it touched to a test that fails without the fix.
-4. **Light path for nit-only batches.** If every valid finding is a bounded nit with no behavior or contract change, one independent review pass (Standards) is enough. Any behavior, authorization, transaction, pagination or error-handling change gets both axes.
+4. **Light path for nit-only batches.** If every valid finding is a bounded nit with no behavior or contract change, one independent review pass (Standards) is enough. Any behavior, authorization, transaction, pagination or error-handling change gets both axes, plus Impact when it matches the Impact trigger.
 5. **If dispatch is unavailable, stop.** Report the blocker. The parent does not take over, and does not accept implementer self-review.
 
 ## One complete cycle

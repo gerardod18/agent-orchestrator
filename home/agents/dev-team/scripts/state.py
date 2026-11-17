@@ -12,6 +12,8 @@ import uuid
 from datetime import datetime, timezone
 
 ACTIVE_STAGES = {"specifying", "awaiting_approval", "implementing", "verifying", "reviewing", "fixing"}
+AXES = ("standards", "spec", "impact")
+DEFAULT_AXES = ["standards", "spec"]
 STAGES = ACTIVE_STAGES | {"ready_local", "needs_input", "blocked", "cancelled"}
 
 
@@ -70,12 +72,27 @@ def fingerprint(root, base):
     return h.hexdigest()
 
 
+def split(value):
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def split_axes(value):
+    axes = split(value)
+    bad = [axis for axis in axes if axis not in AXES]
+    if bad:
+        raise ValueError("Unknown review axis: " + ", ".join(bad))
+    return axes
+
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="action", required=True)
-    for name in ("start", "status", "approve", "stage", "snapshot", "check", "review", "finish"):
+    for name in ("start", "require", "status", "approve", "stage", "snapshot", "check", "review", "finish"):
         command = sub.add_parser(name)
         command.add_argument("--repo", required=True)
+        if name in ("start", "require"):
+            command.add_argument("--axes", default="", help="comma list of required review axes: standards,spec,impact")
+            command.add_argument("--checks", default="", help="comma list of required check names")
         if name == "start":
             command.add_argument("--session", default="")
         if name == "approve":
@@ -87,7 +104,7 @@ def main():
             command.add_argument("--name", required=True)
             command.add_argument("command", nargs=argparse.REMAINDER)
         if name == "review":
-            command.add_argument("--axis", choices=("standards", "spec"), required=True)
+            command.add_argument("--axis", choices=AXES, required=True)
             command.add_argument("--verdict", choices=("pass", "fail"), required=True)
             command.add_argument("--evidence", required=True)
         if name == "finish":
@@ -107,12 +124,23 @@ def main():
         base = git(root, "rev-parse", "HEAD").decode().strip()
         state = {"runId": run_id, "repo": str(root), "sessionId": args.session,
                  "baseSha": base, "baselineSnapshot": fingerprint(root, base),
-                 "stage": "specifying", "approval": None, "checks": {}, "reviewSnapshot": None, "reviews": {}}
+                 "stage": "specifying", "approval": None, "checks": {}, "reviewSnapshot": None, "reviews": {},
+                 "requiredAxes": split_axes(args.axes) or DEFAULT_AXES, "requiredChecks": split(args.checks)}
         atomic_json(run_file, state)
         atomic_json(home_for(root) / "active.json", {"stateFile": str(run_file)})
         print(run_file)
         return
     run_file, state = read_active(root)
+    if args.action == "require":
+        if state["stage"] in ("reviewing", "ready_local"):
+            raise ValueError("Required checks and axes can only change before review")
+        if args.axes:
+            state["requiredAxes"] = split_axes(args.axes)
+        if args.checks:
+            state["requiredChecks"] = split(args.checks)
+        atomic_json(run_file, state)
+        print(json.dumps({"requiredAxes": state["requiredAxes"], "requiredChecks": state["requiredChecks"]}))
+        return
     if args.action == "status":
         print(json.dumps(state, indent=2))
         return
@@ -166,6 +194,9 @@ def main():
             current = fingerprint(root, state["baseSha"])
             if not state["approval"] or not state["checks"]:
                 raise ValueError("Approval and checks required")
+            missing = [name for name in state.get("requiredChecks", []) if name not in state["checks"]]
+            if missing:
+                raise ValueError("Required checks not run: " + ", ".join(missing))
             if hashlib.sha256(Path(state["approval"]["spec"]).read_bytes()).hexdigest() != state["approval"]["specHash"] or hashlib.sha256(Path(state["approval"]["plan"]).read_bytes()).hexdigest() != state["approval"]["planHash"]:
                 raise ValueError("Approved spec or plan changed")
             if any(item["exitCode"] or item["changedDuringCheck"] or item["snapshot"] != current
@@ -173,8 +204,9 @@ def main():
                 raise ValueError("Checks are failed or stale")
             if state["reviewSnapshot"] != current:
                 raise ValueError("Review snapshot is missing or stale")
-            if set(state["reviews"]) != {"standards", "spec"}:
-                raise ValueError("Both review axes are required")
+            required = set(state.get("requiredAxes", DEFAULT_AXES))
+            if not required <= set(state["reviews"]):
+                raise ValueError("Review axes required: " + ", ".join(sorted(required - set(state["reviews"]))))
             for review in state["reviews"].values():
                 if review["verdict"] != "pass" or review["snapshot"] != current or hashlib.sha256(Path(review["evidence"]).read_bytes()).hexdigest() != review["evidenceHash"]:
                     raise ValueError("A review failed or is stale")
