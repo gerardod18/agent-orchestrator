@@ -45,6 +45,8 @@ After the tests pass, small behavior-preserving cleanups of the code you just wr
 
 ## 4. Sibling sweep and verification
 
+Pattern self-check (Tier 0 of `pre-review`, cheap): read `~/.agents/skills/code-review/references/coderabbit-patterns.md` and, for each pattern whose cues appear in your diff, try its "break it with" cases against your code. Fix what breaks. This is authoring discipline, not a review; the independent pass is separate.
+
 Before reporting: for each defect you fixed, search for the same root cause at other call sites and in sibling implementations, and fix or list them. Run typecheck regularly, single test files regularly, and the full agreed gate once at the end. Report exact changed paths, commands with exit codes, seams covered, the invariant-to-test mapping, and anything not verified.
 
 ## 5. Hand-off
