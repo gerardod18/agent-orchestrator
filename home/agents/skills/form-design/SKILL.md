@@ -1,5 +1,6 @@
 ---
 name: form-design
+disable-model-invocation: true
 description: Design a form end to end — field order, grouping, validation, and completion. Use when the artifact is a form. Excludes product-wide onboarding and error-strategy work unless the form itself is in scope.
 ---
 # Form Design

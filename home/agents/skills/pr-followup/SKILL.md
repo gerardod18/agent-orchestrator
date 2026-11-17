@@ -27,8 +27,9 @@ Use contracts from `~/.agents/agent-definitions/` and their generated native rol
 1. **The parent never edits code.** Not even "one quick fix". When review comments land, the parent's first actions are: run `python3 ~/.agents/dev-team/scripts/followup_gate.py on` in the repo (a PreToolUse hook then blocks parent Edit/Write; subagents are exempt), dispatch the PR reader, then pass the reader's complete verdict table to **one** `dev-team-implementer` call. Run `followup_gate.py off` when the PR is ready or the task ends.
 2. **Never relay comments one by one.** The reader's table is the batch. The implementer receives all valid findings of that round together with the original criteria.
 3. **Sweep siblings before the next push.** For each fixed root cause, the implementer searches the other call sites, validators, serializers, caches, background paths and sibling implementations, and fixes or lists them. Then the implementer maps each invariant it touched to a test that fails without the fix.
-4. **Light path for nit-only batches.** If every valid finding is a bounded nit with no behavior or contract change, one independent review pass (Standards) is enough. Any behavior, authorization, transaction, pagination or error-handling change gets both axes, plus Impact when it matches the Impact trigger.
-5. **If dispatch is unavailable, stop.** Report the blocker. The parent does not take over, and does not accept implementer self-review.
+4. **Pre-review before each push.** Run `pre-review` on the correction diff so the bot's next round starts clean.
+5. **Light path for nit-only batches.** If every valid finding is a bounded nit with no behavior or contract change, one independent review pass (Standards) is enough. Any behavior, authorization, transaction, pagination or error-handling change gets both axes, plus Impact when it matches the Impact trigger.
+6. **If dispatch is unavailable, stop.** Report the blocker. The parent does not take over, and does not accept implementer self-review.
 
 ## One complete cycle
 

@@ -48,6 +48,8 @@ Reuse the existing acceptance criteria; a Specs pass is needed only for unresolv
 
 ## Independent review
 
+Before freezing the snapshot for review, run `~/.agents/skills/pre-review/SKILL.md` (the parent runs the tool and dispatches the Implementer for the batch; it never edits code). It catches what CodeRabbit would flag so the independent reviewers see a cleaner change.
+
 Default is two axes. Add `impact` when the change touches authorization/visibility, approval or confirmed writes, schemas or shared contracts, pagination or limits, background jobs, uploads, retry/idempotency, or shared helpers with different consumers, or after a finding exposes a missed sibling path. Declare the required set before review: `state.py require --repo <root> --axes standards,spec[,impact] --checks <names from Specs' validation gate>`. `finish --name ready_local` then fails unless every required check ran on the current snapshot and every required axis passed.
 
 1. Stop writers and freeze the snapshot with `state.py stage --name reviewing`. Send both reviewers the same repo root, resolved review base/merge-base, base used by state tracking, HEAD, snapshot hash and verification command, pre-existing changes, approved spec/plan, and `scope=working-tree`. If the branch already had commits when the run started, the review base still covers the requested branch diff; the state baseline is not a substitute for it.

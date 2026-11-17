@@ -2,3 +2,5 @@ interface:
   display_name: "Export Markdown to Codex"
   short_description: "Guarda exportaciones Markdown en ~/Documents/Codex"
   default_prompt: "Exporta el contenido solicitado como archivo Markdown dentro de ~/Documents/Codex."
+policy:
+  allow_implicit_invocation: false

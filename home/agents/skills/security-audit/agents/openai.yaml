@@ -1,0 +1,4 @@
+interface:
+  display_name: "security-audit"
+policy:
+  allow_implicit_invocation: false

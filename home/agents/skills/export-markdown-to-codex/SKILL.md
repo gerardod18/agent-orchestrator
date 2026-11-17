@@ -1,5 +1,6 @@
 ---
 name: export-markdown-to-codex
+disable-model-invocation: true
 description: Export Markdown files to the user's personal Codex documents folder. Use when the user asks to export or save general Markdown content to Documents/Codex. Not for plans, handoffs or reports, which go to `~/claude-plans/<repo>/`.
 ---
 

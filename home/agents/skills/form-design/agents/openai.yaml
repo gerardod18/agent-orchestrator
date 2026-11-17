@@ -1,0 +1,4 @@
+interface:
+  display_name: "form-design"
+policy:
+  allow_implicit_invocation: false

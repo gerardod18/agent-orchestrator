@@ -1,0 +1,4 @@
+interface:
+  display_name: "frontend-design"
+policy:
+  allow_implicit_invocation: false

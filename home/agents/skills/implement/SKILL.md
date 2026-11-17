@@ -37,7 +37,7 @@ Every test traces to a criterion, invariant, or failure case. Work in vertical s
 - **Independent expected values:** from a literal, a worked example, or the spec, never recomputed the way the code does.
 - **Anti-patterns:** implementation-coupled mocks, tautological assertions, horizontal slicing. See [tests.md](tests.md) and [mocking.md](mocking.md).
 
-When the interface shape itself is in question, use `api-and-interface-design`.
+When the interface shape itself is in question, read `~/.agents/skills/api-and-interface-design/SKILL.md` (on-demand only).
 
 ## 3. Refactor under green
 
@@ -50,4 +50,4 @@ Before reporting: for each defect you fixed, search for the same root cause at o
 ## 5. Hand-off
 
 - **Inside dev-team or PR follow-up:** stop here. Return the snapshot to the parent. Never self-review, commit, or push; the parent dispatches independent Standards and Spec reviews and the Publisher.
-- **Standalone:** invoke `code-review` (both axes, independent), then the `commit` skill and, per shared policy, `create-pr`. They handle branch name, Linear ticket, conventional commit and PR body.
+- **Standalone:** run `pre-review` first, then `code-review` (both axes, independent), then the `commit` skill and, per shared policy, `create-pr`. They handle branch name, Linear ticket, conventional commit and PR body.
