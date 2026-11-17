@@ -1,0 +1,18 @@
+# Stateful changes: trace the whole contract
+
+Use the relevant rows when reviewing protected reads/writes, approvals, previews, retries, history, pagination, search, or truncation. This is a risk-directed pass, not a checklist to apply to unrelated code. Follow repository-specific domain and authorization documents first. Do not treat a nearby implementation as a specification merely because it already exists.
+
+For each changed operation, trace input validation → caller/tool availability → read/preview → authorization → write/transaction → returned error/data → user-visible representation. Follow at least the immediate callers and callees required to establish the invariant. A check being present is not proof that it covers all relevant data.
+
+| Risk | Proof to seek | Adversarial case |
+|---|---|---|
+| Approval freshness / TOCTOU | The preview's canonical basis includes every identity, membership, revision and permission affecting the write; the writer recomputes/compares it inside the transaction before side effects. | Change an inherited member outside displayed examples, keep counts equal, alter indirect membership without changing the parent revision, revoke scope after preview. |
+| Partial/bounded reads | Distinguish complete-empty, not-read, partial, truncated, hidden and failed results. Caps apply across all access paths; destructive writes fail closed when full impact cannot be established. | N-1/N/N+1 items; alternate cursor options; loader throws before the fallback; optional comparison too large; count preserved but membership changed. |
+| Authorization and historical data | Backend permission checks cover names, errors, archived/deleted/renamed records and indirect targets, not only the active object. Redaction relies on proven provenance, not comparison with today's display name. | No read permission; operational scope revoked; deleted target; old name after rename; access denied before an early status/error response. |
+| Error semantics | Enumerate relevant caller/callee error variants. Map only documented expected failures; propagate unrelated failures. Distinguish definite no-write from ambiguous post-write outcomes. | Missing resource vs missing catalog/invariant; policy denial vs transport failure; partial batch failure; retry after a possibly completed write. |
+| Search and limits | Verify actual backend semantics from installed code or official docs when uncertain. Client-side token/count guards match backend tokenization and cursor behavior. An index fix must preserve or explicitly change the promised query semantics. | Punctuation, Unicode, long input, empty normalized query; match beyond first page; substring vs prefix; end cursor bypassing page-size limits. |
+| User-visible truth | Preserve critical reason, timestamp, total and safety warning when labels/examples are shortened. Preview and execute describe the same effect. | Very long label suppresses reason; nine impacted members but eight names; unread impact displayed as zero. |
+
+Review tests for false confidence. A test that passes on any thrown error does not prove authorization order; assert the expected code and absence of sensitive details/side effects. A snapshot or lint pass does not prove approval freshness. Identify an explicit counterexample per applicable invariant; record the source path, test/repro evidence, or the precise missing proof.
+
+Correction reviews must check that the fix did not replace one bug with another: catch-all conversions, changed search semantics, new import cycles, extra reads, early information leaks, altered permission sets, or weakened assertions. Do not demand unrelated refactors or treat aesthetic preferences as correctness defects.

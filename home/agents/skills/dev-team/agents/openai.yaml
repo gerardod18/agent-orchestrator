@@ -1,0 +1,6 @@
+interface:
+  display_name: Development team
+  short_description: Coordinate an approved spec, implementation, and independent
+    reviews
+policy:
+  allow_implicit_invocation: false

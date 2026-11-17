@@ -1,0 +1,37 @@
+{
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "command": "python3 {{HOME}}/.agents/dev-team/scripts/codex_hook.py",
+          "timeout": 3,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "SubagentStart": [
+    {
+      "hooks": [
+        {
+          "command": "python3 {{HOME}}/.agents/dev-team/scripts/codex_hook.py",
+          "timeout": 3,
+          "type": "command"
+        }
+      ],
+      "matcher": "^dev-team-"
+    }
+  ],
+  "PreToolUse": [
+    {
+      "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python3 {{HOME}}/.agents/dev-team/scripts/followup_gate.py",
+          "timeout": 3
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+<title>Agent Orchestration Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: layered map, policy on top, orchestrators, agents, skills; detail panel follows hover. */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --fg:#16202b; --muted:#5b6876; --line:#d5dbe3; --edge:#9aa6b4;
+  --policy:#c27a0e; --hook:#c2415d; --orch:#6d4fd0; --agent:#2563c9; --skill:#0f8a7a; --skill2:#6b8f9a;
+  --font:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f151c; --panel:#171f29; --fg:#e6ebf1; --muted:#97a4b3; --line:#2a3541; --edge:#5a6877;
+  --policy:#e8a33d; --hook:#ec6f8a; --orch:#9b82f0; --agent:#5a96f2; --skill:#34c3ae; --skill2:#7fa5b1; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151c; --panel:#171f29; --fg:#e6ebf1; --muted:#97a4b3; --line:#2a3541; --edge:#5a6877;
+  --policy:#e8a33d; --hook:#ec6f8a; --orch:#9b82f0; --agent:#5a96f2; --skill:#34c3ae; --skill2:#7fa5b1; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+*{box-sizing:border-box}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between;margin-bottom:14px}
+h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=search]{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:13px var(--font);min-width:200px}
+input[type=search]:focus-visible,circle:focus-visible{outline:2px solid var(--agent);outline-offset:2px}
+.legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.legend .dash{background:none!important;border:1.5px dashed var(--muted);width:9px;height:9px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;align-items:start}
+@media (max-width:900px){main{grid-template-columns:minmax(0,1fr)}}
+.map{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+svg{display:block;min-width:760px;width:100%;height:auto}
+.rowlabel{font:600 10px var(--font);fill:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.edge{fill:none;stroke:var(--edge);stroke-width:1.1;opacity:.45;transition:opacity .12s}
+.edge.hot{opacity:1;stroke-width:1.8}
+.edge.dim,.node.dim{opacity:.08}
+.node{cursor:pointer;transition:opacity .12s}
+.node circle.c{stroke:var(--panel);stroke-width:2}
+.node text{font:500 10px var(--font);fill:var(--fg);text-anchor:middle;pointer-events:none}
+.node.sel circle.c{stroke:var(--fg);stroke-width:2.5}
+.ring{fill:none;stroke-width:1.4;stroke-dasharray:3 3;pointer-events:none}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+@media (max-width:900px){.panel{position:static;max-height:none}}
+.badge{display:inline-block;font:600 10px var(--font);letter-spacing:.07em;text-transform:uppercase;color:#fff;border-radius:4px;padding:2px 7px}
+.panel h2{font-size:17px;margin:8px 0 6px;font-weight:600;overflow-wrap:anywhere}
+.panel p{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--fg)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;margin:0 0 12px}
+dt{color:var(--muted)} dd{margin:0;overflow-wrap:anywhere}
+h3{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px;font-weight:600}
+.conn{display:flex;flex-wrap:wrap;gap:5px}
+.conn span{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--fg)}
+.conn em{font-style:normal;color:var(--muted)}
+pre{font:11px/1.5 var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;margin:0}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}
+.stats{display:flex;gap:16px;margin:10px 0;flex-wrap:wrap}
+.stats b{font-size:20px;display:block;font-variant-numeric:tabular-nums}
+.stats span{font-size:11px;color:var(--muted)}
+</style>
+
+<header>
+  <div>
+    <h1>Agent Orchestration Map</h1>
+    <div class="sub">Policy, hooks, orchestrators, agents and skills as they exist on disk. Hover a circle to read it; click to pin.</div>
+  </div>
+  <div class="tools">
+    <input type="search" id="q" placeholder="Filter by name or text" aria-label="Filter nodes">
+  </div>
+</header>
+<div class="legend" id="legend" style="margin-bottom:12px"></div>
+<main>
+  <div class="map"><svg id="svg" viewBox="0 0 1000 700" role="img" aria-label="Orchestration graph"></svg></div>
+  <aside class="panel" id="panel" aria-live="polite"></aside>
+</main>
+
+<script>
+const DATA = /*DATA*/null;
+const KIND = {policy:['Policy','--policy'],hook:['Hook / script','--hook'],orchestrator:['Orchestrator skill','--orch'],agent:['Agent','--agent'],skill:['Skill','--skill']};
+const ROWS = ['Policy and hooks','Orchestration','Agents','Skills used by agents','Other skills'];
+const NS = 'http://www.w3.org/2000/svg';
+const $ = s => document.querySelector(s);
+const el = (n, a = {}, p) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const byId = Object.fromEntries(DATA.nodes.map(n => [n.id, n]));
+const color = n => 'var(' + (n.kind === 'skill' && n.row === 4 ? '--skill2' : KIND[n.kind][1]) + ')';
+const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+// legend
+$('#legend').innerHTML = Object.values(KIND).map(([l, v]) => `<span><i style="background:var(${v})"></i>${l}</span>`).join('') +
+  '<span><i class="dash"></i>explicit-only skill</span><span>Size = amount of instruction text</span>';
+
+// layout
+const W = 1000, ROWY = [80, 205, 340, 485, 625];
+const rows = [0,1,2,3,4].map(r => DATA.nodes.filter(n => n.row === r));
+rows.forEach((list, r) => list.forEach((n, i) => {
+  const gap = (W - 150) / Math.max(list.length, 1);
+  n.x = 120 + gap * (i + .5) + (W - 150 - gap * list.length) / 2; n.y = ROWY[r];
+  n.r = 13 + Math.min(15, Math.sqrt(n.size) / 4.2);
+}));
+const svg = $('#svg');
+ROWS.forEach((t, i) => { const x = el('text', {x: 14, y: ROWY[i] - 34, class: 'rowlabel'}, svg); x.textContent = t; });
+const eg = el('g', {}, svg), ng = el('g', {}, svg);
+const edgeEls = DATA.edges.map(e => {
+  const a = byId[e.s], b = byId[e.t]; let d;
+  if (Math.abs(a.y - b.y) < 1) { const m = Math.min(70, 20 + Math.abs(a.x - b.x) / 4); d = `M${a.x},${a.y - a.r} C${a.x},${a.y - a.r - m} ${b.x},${b.y - b.r - m} ${b.x},${b.y - b.r}`; }
+  else { const up = a.y > b.y, y1 = a.y + (up ? -a.r : a.r), y2 = b.y + (up ? b.r : -b.r), m = (y2 - y1) / 2; d = `M${a.x},${y1} C${a.x},${y1 + m} ${b.x},${y2 - m} ${b.x},${y2}`; }
+  return el('path', {d, class: 'edge'}, eg);
+});
+const nodeEls = {};
+DATA.nodes.forEach(n => {
+  const g = el('g', {class: 'node', tabindex: 0, role: 'button', 'aria-label': n.label.replace('\n', '') + ', ' + KIND[n.kind][0]}, ng);
+  el('circle', {cx: n.x, cy: n.y, r: n.r, class: 'c', fill: color(n)}, g);
+  if (n.facts && /explicit/.test(n.facts.invocation || '')) el('circle', {cx: n.x, cy: n.y, r: n.r + 5, class: 'ring', stroke: color(n)}, g);
+  const lines = n.label.includes('\n') ? n.label.split('\n') : n.label.replace(/(.{9,15}?-)/g, '$1|').split('|').filter(Boolean);
+  lines.forEach((t, i) => { const x = el('text', {x: n.x, y: n.y + n.r + 14 + i * 11}, g); x.textContent = t; });
+  g.addEventListener('mouseenter', () => show(n)); g.addEventListener('focus', () => show(n));
+  g.addEventListener('mouseleave', () => show(pinned)); g.addEventListener('click', e => { pinned = pinned === n ? null : n; show(pinned); e.stopPropagation(); });
+  nodeEls[n.id] = g;
+});
+let pinned = null;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { pinned = null; show(null); } });
+document.addEventListener('click', () => { pinned = null; show(null); });
+
+function rel(n) {
+  const out = DATA.edges.filter(e => e.s === n.id), inn = DATA.edges.filter(e => e.t === n.id);
+  return {out, inn};
+}
+function chips(list, key) { return list.length ? `<div class="conn">${list.map(e => `<span>${esc(byId[e[key]].label.replace('\n',''))} <em>${e.k}</em></span>`).join('')}</div>` : '<div class="hint">none</div>'; }
+function overview() {
+  const c = k => DATA.nodes.filter(n => n.kind === k).length;
+  return `<span class="badge" style="background:var(--muted)">Overview</span><h2>Your orchestration layer</h2>
+  <p class="hint">Hover any circle to read its instructions. Lines show who preloads, reads, references or dispatches whom. Click a circle to keep it open and read the full excerpt.</p>
+  <div class="stats"><div><b>${c('agent')}</b><span>agents</span></div><div><b>${c('skill') + c('orchestrator')}</b><span>skills</span></div><div><b>${c('hook')}</b><span>scripts</span></div><div><b>${DATA.edges.length}</b><span>links</span></div></div>
+  <p class="hint">Flow: the parent (dev-team or pr-followup) reads the policy, dispatches the PR reader, then one implementer, then independent Standards and Spec reviewers, then the publisher. The parent never edits code; the follow-up gate hook enforces it.</p>
+  <p class="hint">Built ${esc(DATA.built)} from the files in this repo. Run sync.py push to refresh.</p>`;
+}
+function show(n) {
+  document.querySelectorAll('.sel').forEach(e => e.classList.remove('sel'));
+  const dimAll = !!n;
+  const q = $('#q').value.trim().toLowerCase();
+  const hit = x => !q || (x.id + ' ' + x.desc + ' ' + x.body).toLowerCase().includes(q);
+  const keep = new Set();
+  if (n) { keep.add(n.id); DATA.edges.forEach(e => { if (e.s === n.id) keep.add(e.t); if (e.t === n.id) keep.add(e.s); }); nodeEls[n.id].classList.add('sel'); }
+  DATA.nodes.forEach(x => nodeEls[x.id].classList.toggle('dim', n ? !keep.has(x.id) : !hit(x)));
+  DATA.edges.forEach((e, i) => { const on = n && (e.s === n.id || e.t === n.id); edgeEls[i].classList.toggle('hot', !!on); edgeEls[i].classList.toggle('dim', n ? !on : !!q); });
+  if (!n) { $('#panel').innerHTML = overview(); return; }
+  const {out, inn} = rel(n);
+  const facts = Object.entries(n.facts || {}).filter(([, v]) => v).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+  $('#panel').innerHTML = `<span class="badge" style="background:${color(n)}">${KIND[n.kind][0]}</span><h2>${esc(n.label.replace('\n',''))}</h2>
+  <p>${esc(n.desc)}</p><dl>${facts}</dl>
+  <h3>Uses / dispatches</h3>${chips(out, 't')}<h3>Used by</h3>${chips(inn, 's')}
+  <h3>Instructions${n.body.endsWith('…') ? ' (excerpt)' : ''}</h3><pre>${esc(n.body)}</pre>`;
+}
+$('#q').addEventListener('input', () => show(pinned));
+show(null);
+</script>
