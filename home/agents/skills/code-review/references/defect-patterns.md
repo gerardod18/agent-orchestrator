@@ -10,11 +10,13 @@ For every changed operation, trace input validation → caller or tool availabil
 **Invariant:** anything a person sees and relies on before confirming (names, totals, order, reasons, times, what changed) is complete, unambiguous and identical to what the writer will do.
 **Cues:** a preview, summary, card or fingerprint built from truncated, sliced, sampled or joined data; a name used as an identity; "N more" in place of the omitted items.
 **Break it with:** very long, duplicate or separator-containing values; more items than shown; added, removed, changed and renamed cases; output fed back into the writer's own input validation.
+**Omission is not disclosure:** a note such as "N more" does not make an incomplete approval acceptable while the confirm action stays enabled; confirmation must be blocked or the full content shown.
 **Title shape:** "Keep <critical part> when <display> is shortened." · "Block <confirmation> when the review omits changes." · "Compare <values> element by element."
 
 ## 2. A guard covers every way the state can change
 **Invariant:** the state recorded at review time includes everything displayed and every path that can change it, and the writer re-checks that inside the transaction.
 **Cues:** a digest, hash, revision or `expected*` argument; a preview followed by a write; a recheck in a thin layer before a shared writer; a branch for "already done".
+**Displayed but unguarded is a finding, not "cosmetic":** if the person sees a field when approving and the writer does not re-check it, the approved text can differ from what executes. Rate it by what the person could be misled about, not by how unlikely the window is.
 **Break it with:** a change that doesn't bump the revision (status, archive, rename, metadata, inherited or indirect membership); equal counts with different members; a change between recheck and commit; the already-done and retry paths.
 **Title shape:** "Include <displayed/resolved state> in the <digest>." · "Re-check <state> inside the writer." · "Handle the <guard> on the <already-done> path."
 
@@ -32,6 +34,7 @@ For every changed operation, trace input validation → caller or tool availabil
 
 ## 5. Disclosure follows authorization on every channel
 **Invariant:** names, counts, ids, errors, history and helper results are returned only to someone allowed to see that exact thing, checked at the backend before anything is compared or returned.
+**Type is not scope:** having the read permission for a kind of thing does not mean the target is within the caller's reach. For each helper, record both the permission and the scope or target-reach check.
 **Cues:** a helper that returns a label or count; an error message with a name; an `expected*` comparison; historical or retired records; a permission checked by type but not by scope.
 **Break it with:** no read permission; revoked or narrower scope; renamed or deleted target; a check ordered after the comparison.
 **Title shape:** "Check <scope> before returning <name>." · "Move <comparison> after the access checks."
@@ -56,4 +59,4 @@ Check that a fix did not replace one bug with another: a catch-all conversion, c
 ## Improving recall
 After a PR, compare the automated reviewer's first-round findings with the review-loop ledger. For each miss, first restate it as an existing invariant above and sharpen that invariant's cues or break-it cases. Add a new pattern only if it fits none. Never add a rule per comment, a file name or a PR number.
 
-Replay check (Nov 2026, two PRs, blind reviewer): caught 1 of 7 first-round findings fully and 1 partly. Reviewers stopped early and cleared guards that checked less than the card displayed. That is why `review-loop` requires the three enumerations and a minimum tool budget.
+Replay checks (Nov 2026, two PRs, blind reviewers): a single reviewer without the enumerations caught 1 of 7 first-round findings. With the enumerations, a minimum budget and three parallel axes, the combined reviewers caught 4 of 7. The 3 misses were judgment errors, not coverage: a displayed-but-unguarded field rated cosmetic, an omission treated as disclosed, and a type-level permission accepted as scope. The three rules above address them.
