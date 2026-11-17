@@ -45,6 +45,17 @@ Cues: a comment or doc stating behavior; a test with fixed counts; formatting.
 Title templates: "Update the stale statement about <x>." · "Make the list checks independent of the account count." · "Fix the formatting failure."
 Check: comments match the code; lint and format pass; tests do not depend on ambient data.
 
+## Cues added from the replay (misses on PRs 264 and 272)
+- **Joined comparison:** a list compared via `join('\n')`/`join(',')` of names that may contain the separator. Compare element by element. (264)
+- **Update guard vs archived/inactive state:** a guarded update checks `revision` but archive or deactivate does not bump it. Re-check the active state inside the writer. (264)
+- **Truncated change list on a confirmation card:** `changeCount > changes.length` with `blocked: null`. Block or show everything before confirming. (272, Major)
+- **Basis narrower than the card:** the card shows title/artist/labels but the guarded basis stores only status. Every displayed field the user relies on must be in the basis the writer re-checks. (272, Major)
+- **Redaction by type permission only:** a helper reveals a name when the caller has `<thing>:read` without checking operational scope or that the target is within the caller's reach. (272)
+- **Writer throws plain `Error`, caller maps coded errors:** the caller's fallback then replaces the real reason. Throw the coded error the mapper recognizes. (272)
+
+## Replay baseline (Nov 2026, blind reviewer at first-pushed commit, 14 tool calls each)
+Bot first-round findings: 7. Caught 1 fully (committed result lost when the follow-up read fails) and 1 partly (revision not bumped by a related change). Missed 5, including both Major ones. Recall about 15-30%. One extra finding (the already-published digest path) matched a bot finding on stacked PR 271. Reviewers stopped far under budget and cleared the status-only guard as fine, which is exactly what the bot flagged. See the enumerate-before-concluding rule in `pre-review`.
+
 ## Test quality (summary findings)
 A guard needs a test that fails without it, for the same wrong reason. Past misses: a race injected before the recheck, punctuation that never reached the empty-query branch, fixtures lacking the meaningful tags, a generic "throws" assertion.
 
