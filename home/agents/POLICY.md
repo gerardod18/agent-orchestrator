@@ -46,7 +46,7 @@ Before work that needs an external system (browser session, tracker, cloud conso
 - When an agent finishes implementation work and the required checks and independent reviews pass, it publishes automatically, without asking: branch rename if the name is tool-generated, Linear ticket if none exists, Conventional Commit, guarded push of the verified head, and a PR with a templated body. Use the `commit` and `create-pr` skills.
 - Branches are `<type>/<ticket-id>-<slug>` (for example `fix/vox-123-login-redirect`); commits and PR titles are `type(scope): subject` (for example `fix(users): redirect to the original page after login`). Never random or tool-generated names.
 - If the work has no Linear ticket, create one from the work. If Linear is unavailable, continue and say so.
-- The orchestrator never fixes code itself. Review comments go to the PR reader, then as one batch to the implementer (`pr-followup`).
+- The orchestrator never fixes code itself. The parent retrieves review comments with the tool and sends them as one batch to the implementer; reviewers audit the result (`pr-followup`).
 - This does not cover merge, deploy, force-push, or changing a PR base: those stay separately authorized.
 
 ## PR follow-up

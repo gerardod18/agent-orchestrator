@@ -11,7 +11,7 @@ import tempfile
 import uuid
 from datetime import datetime, timezone
 
-ACTIVE_STAGES = {"specifying", "awaiting_approval", "implementing", "verifying", "reviewing", "fixing"}
+ACTIVE_STAGES = {"feedback", "specifying", "awaiting_approval", "implementing", "verifying", "reviewing", "fixing"}
 AXES = ("standards", "spec", "impact")
 DEFAULT_AXES = ["standards", "spec"]
 STAGES = ACTIVE_STAGES | {"ready_local", "needs_input", "blocked", "cancelled"}
