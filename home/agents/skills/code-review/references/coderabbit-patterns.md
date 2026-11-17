@@ -1,63 +1,51 @@
-# What CodeRabbit flags in these PRs (115 inline findings, 30 PRs, Nov 2026)
+# Bot-review patterns: the invariants behind the findings
 
-Evidence, not its prompt. Labels: Functional Correctness 78, Data Integrity & Integration 18, Security & Privacy 7, Stability & Availability 7, Maintainability 3, Performance 2. Severity: Minor 78, Major 37. Effort: Quick win 91, Heavy lift 24. Location: backend 94, web 18, tests 2. Hot files: the Copilot review/approval tools and writers (`review.ts`, `schedules.ts`, `songs.ts`, `archiveSpots.ts`, `storeAdmin.ts`, `read.ts`, `write.ts`, `prompt.ts`). Hunt functional bugs first; skip style. The bot also reports "outside diff range" findings: read the unchanged code your change depends on.
+Distilled from 115 inline findings on 30 PRs (Nov 2026). These are classes of defect, not a list of past comments. Label mix: Functional Correctness 68%, Data Integrity 16%, Security 6%, Stability 6%. 79% were "quick wins" and 82% were in backend write and approval paths. Hunt reachable functional bugs first; skip style. Read the unchanged code your change depends on: the bot reports "outside the diff" too.
 
-For each hunk: read callers, callees and validators, state the claim the code or its comment makes, then try to break it.
+Method for every hunk: state the claim the code or its comment makes, read its callers, callees and validators, then try to break the claim with the cases below. Report the invariant that fails, not just the line.
 
-## 1. Approval display and identity (33)
-Cues: a preview, summary, label or fingerprint built from truncated, sliced or example data; `.slice`, `.substring`, `take`, `join` on a displayed string; a name used where an id is needed; a list of N items shown with fewer.
-Break it with: label of 200+ chars, duplicate names, nine items shown as eight, renamed or removed items, offsets, exceptions, source rule, UTC time.
-Title templates: "Keep <reason/time/total> when <label> is long." · "Include <source rule> in <row> identity." · "Block <confirm/rollback> when the review omits changes." · "Show the total when names are truncated." · "Flag omitted positions."
-Check: every added, removed, changed and renamed field represented; stable identity, not display name; preview output accepted by the writer's input validator (round trip).
+## 1. What is approved is what executes
+**Invariant:** anything a person sees and relies on before confirming (names, totals, order, reasons, times, what changed) is complete, unambiguous and identical to what the writer will do.
+**Cues:** a preview, summary, card or fingerprint built from truncated, sliced, sampled or joined data; a name used as an identity; "N more" in place of the omitted items.
+**Break it with:** very long, duplicate or separator-containing values; more items than shown; added, removed, changed and renamed cases; output fed back into the writer's own input validation.
+**Title shape:** "Keep <critical part> when <display> is shortened." · "Block <confirmation> when the review omits changes." · "Compare <values> element by element."
 
-## 2. Workflow and dependency integration (27)
-Cues: a changed shape, key or option; a new field; a tool or prompt change; a React Query key; a persisted value read back later.
-Break it with: another caller, a second validator, a serializer, a cache key without the workspace id, a persisted record missing the new field, a prompt that offers a tool the policy hides, a sibling uploader, unmount and cancellation.
-Title templates: "Add <field> to both <validator>s." · "Add the workspace corporation to the review query key." · "Normalize persisted targets that omit <field>." · "Scope <tool> so it does not conflict with <other tool>." · "Gate <A> and <B> separately."
-Check: grep every consumer of the changed symbol; compare siblings of the same shape.
+## 2. A guard covers every way the state can change
+**Invariant:** the state recorded at review time includes everything displayed and every path that can change it, and the writer re-checks that inside the transaction.
+**Cues:** a digest, hash, revision or `expected*` argument; a preview followed by a write; a recheck in a thin layer before a shared writer; a branch for "already done".
+**Break it with:** a change that doesn't bump the revision (status, archive, rename, metadata, inherited or indirect membership); equal counts with different members; a change between recheck and commit; the already-done and retry paths.
+**Title shape:** "Include <displayed/resolved state> in the <digest>." · "Re-check <state> inside the writer." · "Handle the <guard> on the <already-done> path."
 
-## 3. Errors and recovery (18)
-Cues: `try/catch`, `.catch`, a fallback, a status mapped from an error, a write followed by a read, audit or response.
-Break it with: authorization denial, scope loss mid-run, malformed JSON, transient failure, a failure after the write committed, every item failing, duplicate input.
-Title templates: "Map <denial> from pre-write reads to <coded error>." · "Restrict the fallback to recognized <missing-x> errors." · "Do not classify every <query> failure as <not found>." · "Convert malformed <input> JSON to a domain error." · "Preserve per-item reasons when every mutation fails."
-Check: each failure phase has its own honest outcome; unrelated errors propagate.
+## 3. Boundaries and budgets hold globally
+**Invariant:** limits are applied where they bound the real work and are reported honestly.
+**Cues:** `limit`, `take`, a cursor, a scan then a filter, a loop over owners or parents, a union of capped lists, tokenized search.
+**Break it with:** N-1 / N / N+1; the limit applied before merge or dedupe; a budget not shared across a loop; reads not counted; empty-after-normalization input; truncation without a continuation.
+**Title shape:** "Apply the limit after <merge>." · "Share one budget across <loop>." · "Report <unread/omitted> impact."
 
-## 4. Bounds, pagination and search (14)
-Cues: `.take(`, `limit`, a cursor, `filter` after a scan, a loop over owners, a union of capped lists, tokenization of search terms.
-Break it with: N-1 / N / N+1, limit applied before merge or dedupe, a budget not shared across a loop, parent reads not counted, archived owners counted, an end cursor, a term that is empty after punctuation is stripped.
-Title templates: "Apply the <N>-item limit after merging <lists>." · "Share one <read> budget across the loop." · "Bound <cursor> on <history> pages." · "Replace the filtered scan with an indexed lookup." · "Report unread impact when the limit is exceeded."
-Check: truncation is reported, with a continuation or an honest blocker; totals match what is shown.
+## 4. Each failure phase gets its own honest outcome
+**Invariant:** callers distinguish validation, authorization, stale state, transient failure, committed-but-response-lost and post-commit side-effect failure; unrelated errors propagate.
+**Cues:** `try/catch`, a fallback, an error-to-status mapping, a write followed by a read or audit, a thrown plain error where callers map coded ones.
+**Break it with:** denial mid-run; malformed input; every item failing; failure after the write; retry after a lost response.
+**Title shape:** "Map <denial> to <coded outcome>." · "Restrict the fallback to <expected error>." · "Preserve the committed result if <follow-up> fails."
 
-## 5. Transaction freshness (11)
-Cues: a preview then a confirmed write; a digest, hash or `expected*` argument; a tool-layer recheck before a shared writer.
-Break it with: a member added to an inherited set, equal counts with different membership, a state change between recheck and commit, the already-published or already-done path.
-Title templates: "Include <resolved membership/inherited identities> in the <digest>." · "Pin the reviewed <set> when <writing>." · "Check reviewed <state> inside the writer." · "Handle the digest on the <alreadyDone> path."
-Check: the exact identity set is validated inside the transaction; the race test mutates between recheck and commit.
+## 5. Disclosure follows authorization on every channel
+**Invariant:** names, counts, ids, errors, history and helper results are returned only to someone allowed to see that exact thing, checked at the backend before anything is compared or returned.
+**Cues:** a helper that returns a label or count; an error message with a name; an `expected*` comparison; historical or retired records; a permission checked by type but not by scope.
+**Break it with:** no read permission; revoked or narrower scope; renamed or deleted target; a check ordered after the comparison.
+**Title shape:** "Check <scope> before returning <name>." · "Move <comparison> after the access checks."
 
-## 6. Authorization and disclosure (8)
-Cues: a name, count or error string returned; an `expected*` comparison; a lookup helper; history or retired records.
-Break it with: no read permission, revoked scope, renamed or deleted target, a comparison done before the access check, today's name used to redact an old one.
-Title templates: "Check <access> before returning a stored <name>." · "Redact <inaccessible> target names." · "Move the <expected> check after the access checks." · "Bind <tool> to the selected workspace."
-Check: the whole response (errors, blockers, history), not only the primary object, honors permissions; backend check, not a UI guard.
+## 6. A contract change reaches every consumer
+**Invariant:** when a shape, key, option or tool changes, all consumers, validators, serializers, caches, persisted records and sibling implementations change with it.
+**Cues:** a new or renamed field; a changed query or cache key; a tool or prompt offered to a model; a persisted value read back later; an async or UI lifecycle.
+**Break it with:** an older persisted record; a second caller; a cache key missing a scope id; unmount, cancellation, workspace switch, retry; two tools with overlapping scope.
+**Title shape:** "Add <field> to every <validator>." · "Include <scope> in the <key>." · "Normalize persisted <records> that omit <field>."
 
-## 7. Validation and documentation (4)
-Cues: a comment or doc stating behavior; a test with fixed counts; formatting.
-Title templates: "Update the stale statement about <x>." · "Make the list checks independent of the account count." · "Fix the formatting failure."
-Check: comments match the code; lint and format pass; tests do not depend on ambient data.
-
-## Cues added from the replay (misses on PRs 264 and 272)
-- **Joined comparison:** a list compared via `join('\n')`/`join(',')` of names that may contain the separator. Compare element by element. (264)
-- **Update guard vs archived/inactive state:** a guarded update checks `revision` but archive or deactivate does not bump it. Re-check the active state inside the writer. (264)
-- **Truncated change list on a confirmation card:** `changeCount > changes.length` with `blocked: null`. Block or show everything before confirming. (272, Major)
-- **Basis narrower than the card:** the card shows title/artist/labels but the guarded basis stores only status. Every displayed field the user relies on must be in the basis the writer re-checks. (272, Major)
-- **Redaction by type permission only:** a helper reveals a name when the caller has `<thing>:read` without checking operational scope or that the target is within the caller's reach. (272)
-- **Writer throws plain `Error`, caller maps coded errors:** the caller's fallback then replaces the real reason. Throw the coded error the mapper recognizes. (272)
-
-## Replay baseline (Nov 2026, blind reviewer at first-pushed commit, 14 tool calls each)
-Bot first-round findings: 7. Caught 1 fully (committed result lost when the follow-up read fails) and 1 partly (revision not bumped by a related change). Missed 5, including both Major ones. Recall about 15-30%. One extra finding (the already-published digest path) matched a bot finding on stacked PR 271. Reviewers stopped far under budget and cleared the status-only guard as fine, which is exactly what the bot flagged. See the enumerate-before-concluding rule in `pre-review`.
-
-## Test quality (summary findings)
-A guard needs a test that fails without it, for the same wrong reason. Past misses: a race injected before the recheck, punctuation that never reached the empty-query branch, fixtures lacking the meaningful tags, a generic "throws" assertion.
+## 7. Claims match code, and tests prove them
+**Invariant:** comments and docs describe what the code does; each guard has a test that fails without it, for the same wrong reason.
+**Cues:** a comment stating behavior; a generic "throws" assertion; fixtures missing the distinguishing data; a race injected before the recheck; assertions on ambient counts.
+**Title shape:** "Update the stale statement about <x>." · "Make <check> independent of <ambient data>."
 
 ## Improving recall
-After each PR, add every bot finding the pre-review missed as a cue and a title template here. Do not paste the list into other prompts.
+After a PR, compare the bot's first-round findings with the pre-review ledger. For each miss, first restate it as an existing invariant above and sharpen that invariant's cues or break-it cases. Add a new pattern only if it fits none. Never add a rule per comment, a file name or a PR number.
+
+Replay check (Nov 2026, two PRs, blind reviewer): caught 1 of 7 first-round findings fully and 1 partly. Reviewers stopped early and cleared guards that checked less than the card displayed. That is why `pre-review` requires the three enumerations and a minimum tool budget.
