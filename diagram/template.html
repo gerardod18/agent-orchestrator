@@ -74,7 +74,7 @@ pre{font:11px/1.5 var(--mono);background:var(--bg);border:1px solid var(--line);
 <script>
 const DATA = /*DATA*/null;
 const KIND = {policy:['Policy','--policy'],hook:['Hook / script','--hook'],orchestrator:['Orchestrator skill','--orch'],agent:['Agent','--agent'],skill:['Skill','--skill']};
-const ROWS = ['Policy and hooks','Orchestration','Agents','Skills used by agents','Other skills'];
+const ROWS = ['Policy and hooks','Orchestration','Agents','Skills used by the team','Other skills'];
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const el = (n, a = {}, p) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };

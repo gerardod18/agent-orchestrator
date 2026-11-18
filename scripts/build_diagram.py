@@ -3,7 +3,7 @@
 import json, re, sys, time
 from pathlib import Path
 
-ORCH = {"dev-team", "pr-followup"}
+ORCH = {"dev-team"}
 # roles named in prose rather than by id
 ROLE = {"Implementer": "dev-team-implementer", "Standards reviewer": "dev-team-review-standards",
         "Spec reviewer": "dev-team-review-spec", "Impact reviewer": "dev-team-review-impact", "Publisher": "dev-team-publisher", "Specs": "dev-team-specs"}
@@ -83,7 +83,7 @@ def build(repo):
     repo = Path(repo)
     nodes, text = collect(repo)
     ed = edges(nodes, text)
-    skill_targets = {e["t"] for e in ed if nodes[e["s"]]["kind"] == "agent"}
+    skill_targets = {e["t"] for e in ed if nodes[e["s"]]["kind"] in ("agent", "orchestrator")}
     for k, v in nodes.items():
         v["row"] = {"policy": 0, "hook": 0, "orchestrator": 1, "agent": 2}.get(v["kind"], 3 if k in skill_targets else 4)
         v["size"] = len(v["body"])

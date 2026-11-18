@@ -1,6 +1,6 @@
 ---
 name: review-loop
-description: Run every independent review before the first commit, push or PR: launch the required reviewers in parallel, batch their findings to one implementer, repeat until clean. Runs automatically after implementation passes its checks, and on correction diffs during PR follow-up. Use when asked to review a branch before publishing.
+description: "Run every independent review before the first commit, push or PR: launch the required reviewers in parallel, batch their findings to one implementer, repeat until clean. Runs automatically after implementation passes its checks, and on correction diffs during PR follow-up. Use when asked to review a branch before publishing."
 ---
 
 # Review loop
